@@ -1,9 +1,18 @@
 const { Router } = require("express");
-const { model } = require("mongoose");
 const AuthController = require("../controllers/auth.controller");
+const registerValidator = require("../validators/register.validator");
+const { body } = require("express-validator");
+const router = Router();
 
-let AuthRouter = Router();
+router.post("/register", registerValidator, AuthController.register);
 
-AuthRouter.post("/register", AuthController.register);
+router.get("/activation/:id", AuthController.activation);
 
-module.exports = AuthRouter;
+router.post("/login", body("email").isEmail(), AuthController.login);
+// router.post("/logout", AuthController.logout);
+// router.get("/refresh", AuthController.refresh);
+// router.get("/get-users", authMiddleware, AuthController.getUser);
+// router.post("/forgot-password", AuthController.forgotPassword);
+// router.put("/recovery-account", AuthController.recoveryAccount);
+
+module.exports = router;
