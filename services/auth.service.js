@@ -1,5 +1,8 @@
+const { DOMAIN } = require("../config/settings");
 const UserDto = require("../dtos/user.dto");
+const tokenModel = require("../models/token.model");
 const UserModel = require("../models/user.model");
+const MailService = require("./mail.service");
 const tokenService = require("./token.service");
 const bcrypt = require("bcrypt");
 class AuthService {
@@ -7,19 +10,21 @@ class AuthService {
         try {
             let existUser = await UserModel.findOne({ email });
             if (existUser) {
-                return {
-                    message: "User already exists with this email",
-                };
+                throw new Error("Email already exists");
             }
             let user = await UserModel.create({
                 email,
                 password: bcrypt.hashSync(password, 10),
             });
+            await MailService.sendActivationMail(
+                email,
+                `http://${DOMAIN}/api/auth/activation/` + user._id
+            );
             let tokens = tokenService.generateToken(user);
             user = new UserDto(user);
             return { user, ...tokens };
         } catch (error) {
-            console.log(error);
+            throw error;
         }
     }
     async activate(id) {
@@ -35,20 +40,47 @@ class AuthService {
         return user;
     }
     async login(email, password) {
-        let user = await UserModel.findOne({ email });
-        if (!user) {
-            return {
-                message: "User not found",
-            };
+        try {
+            let user = await UserModel.findOne({ email });
+            if (!user) {
+                throw new Error("User not found");
+            }
+            if (!bcrypt.compareSync(password, user.password)) {
+                throw new Error("Password is incorrect");
+            }
+            let tokens = tokenService.generateToken(user);
+            user = new UserDto(user);
+            return { user, ...tokens };
+        } catch (error) {
+            throw error;
         }
-        if (!bcrypt.compareSync(password, user.password)) {
-            return {
-                message: "Password is incorrect",
-            };
+    }
+    // ! something is not right here
+    async refresh(refreshToken) {
+        try {
+            if (!refreshToken) {
+                throw new Error("Bad authorization");
+            }
+
+            const userPayload = await tokenService.validateRefreshToken(
+                refreshToken
+            );
+            const tokenDb = await tokenService.findToken(refreshToken);
+            if (!userPayload || !tokenDb) {
+                throw new Error("Bad authorization");
+            }
+
+            const user = await UserModel.findById(userPayload.id);
+            const userDto = new UserDto(user);
+
+            const tokens = tokenService.generateToken({ ...userDto });
+
+            await tokenService.saveToken(userDto.id, tokens.refreshToken);
+
+            return { user: userDto, ...tokens };
+        } catch (error) {
+            console.log(error);
         }
-        let tokens = tokenService.generateToken(user);
-        user = new UserDto(user);
-        return { user, ...tokens };
     }
 }
 

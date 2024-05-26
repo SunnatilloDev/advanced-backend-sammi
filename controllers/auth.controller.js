@@ -1,9 +1,10 @@
 const UserDto = require("../dtos/user.dto");
-const UserModel = require("../models/user.model");
-const bcrypt = require("bcrypt");
+const tokenModel = require("../models/token.model");
 const AuthService = require("../services/auth.service");
-const TokenService = require("../services/token.service");
 const { validationResult } = require("express-validator");
+const tokenService = require("../services/token.service");
+const UserModel = require("../models/user.model");
+const authService = require("../services/auth.service");
 class AuthController {
     async register(req, res, next) {
         try {
@@ -17,6 +18,7 @@ class AuthController {
             let { email, password } = req.body;
             let data = await AuthService.register(email, password);
             console.log(data);
+            await tokenService.saveToken(data.user.id, data.refreshToken);
             res.cookie("refreshToken", data.refreshToken, {
                 httpOnly: true,
                 maxAge: 30 * 24 * 60 * 60 * 1000,
@@ -34,10 +36,7 @@ class AuthController {
             let { id } = req.params;
             let user = await AuthService.activate(id);
             let userDto = new UserDto(user);
-            res.send({
-                message: "User activated successfully",
-                user: userDto,
-            });
+            res.send(`User ${userDto.email} activated successfully`);
         } catch (error) {
             next(error);
         }
@@ -53,6 +52,12 @@ class AuthController {
             }
             let { email, password } = req.body;
             let data = await AuthService.login(email, password);
+            if (!data.user) {
+                return res.status(404).json({
+                    message: "User not found",
+                });
+            }
+            await tokenService.saveToken(data.user.id, data.refreshToken);
             res.cookie("refreshToken", data.refreshToken, {
                 httpOnly: true,
                 maxAge: 30 * 24 * 60 * 60 * 1000,
@@ -61,6 +66,40 @@ class AuthController {
                 message: "User logged in successfully",
                 ...data,
             });
+        } catch (error) {
+            next(error);
+        }
+    }
+    async logout(req, res, next) {
+        try {
+            let { refreshToken } = req.cookies;
+            let token = await tokenModel.findOne({ refreshToken });
+            if (!token) {
+                return res.status(404).json({
+                    message: "Token not found",
+                });
+            }
+            await tokenService.deleteToken(refreshToken);
+            res.clearCookie("refreshToken");
+            return res.status(200).json({
+                message: "User logged out successfully",
+            });
+        } catch (error) {
+            next(error);
+        }
+    }
+
+    // ! something is not right here
+    async refresh(req, res, next) {
+        try {
+            const { refreshToken } = req.cookies;
+            const data = await authService.refresh(refreshToken);
+            console.log(data);
+            res.cookie("refreshToken", data.refreshToken, {
+                httpOnly: true,
+                maxAge: 30 * 24 * 60 * 60 * 1000,
+            });
+            return res.json(data);  
         } catch (error) {
             next(error);
         }

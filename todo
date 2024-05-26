@@ -1,7 +1,7 @@
 for may 25:
     - finish the auth function fully
-        - add the email and password
-        - add validators
-        - add jwt tokens, access and refresh
-    - make error handler
+        - add the email and password :done
+        - add validators :done
+        - add jwt tokens, access and refresh :done
+    - make error handler :done
     ...
