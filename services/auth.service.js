@@ -20,8 +20,8 @@ class AuthService {
                 email,
                 `http://${DOMAIN}/api/auth/activation/` + user._id
             );
-            let tokens = tokenService.generateToken(user);
             user = new UserDto(user);
+            let tokens = tokenService.generateToken(user);
             return { user, ...tokens };
         } catch (error) {
             throw error;
@@ -48,14 +48,13 @@ class AuthService {
             if (!bcrypt.compareSync(password, user.password)) {
                 throw new Error("Password is incorrect");
             }
-            let tokens = tokenService.generateToken(user);
             user = new UserDto(user);
+            let tokens = tokenService.generateToken(user);
             return { user, ...tokens };
         } catch (error) {
             throw error;
         }
     }
-    // ! something is not right here
     async refresh(refreshToken) {
         try {
             if (!refreshToken) {
@@ -75,12 +74,15 @@ class AuthService {
 
             const tokens = tokenService.generateToken({ ...userDto });
 
-            await tokenService.saveToken(userDto.id, tokens.refreshToken);
+            await tokenService.saveToken(user._id, tokens.refreshToken);
 
             return { user: userDto, ...tokens };
         } catch (error) {
-            console.log(error);
+            throw error;
         }
+    }
+    async getUsers() {
+        return await UserModel.find();
     }
 }
 
