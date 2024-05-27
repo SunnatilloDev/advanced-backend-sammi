@@ -72,7 +72,7 @@ class AuthService {
             const user = await UserModel.findById(userPayload.id);
             const userDto = new UserDto(user);
 
-            const tokens = tokenService.generateToken({ ...userDto });
+            const tokens = tokenService.generateToken({ ...user });
 
             await tokenService.saveToken(user._id, tokens.refreshToken);
 
@@ -80,9 +80,6 @@ class AuthService {
         } catch (error) {
             throw error;
         }
-    }
-    async getUsers() {
-        return await UserModel.find();
     }
 }
 

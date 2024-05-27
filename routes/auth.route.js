@@ -11,7 +11,6 @@ router.post("/login", body("email").isEmail(), AuthController.login);
 router.post("/logout", AuthController.logout);
 
 router.get("/refresh", AuthController.refresh);
-router.get("/get-users", authMiddleware, AuthController.getUsers);
 // router.post("/forgot-password", AuthController.forgotPassword);
 // router.put("/recovery-account", AuthController.recoveryAccount);
 

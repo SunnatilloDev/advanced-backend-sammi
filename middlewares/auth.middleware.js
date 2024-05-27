@@ -1,6 +1,7 @@
+const UserModel = require("../models/user.model");
 const tokenService = require("../services/token.service");
 
-let authMiddleware = (req, res, next) => {
+let authMiddleware = async (req, res, next) => {
     let accessToken = req.headers.authorization;
 
     if (!accessToken) {
@@ -9,13 +10,18 @@ let authMiddleware = (req, res, next) => {
         });
     }
     accessToken = accessToken.split(" ")[1];
-    let userData = tokenService.validateAccessToken(accessToken);
-    if (!userData) {
+    let userData = await tokenService.validateAccessToken(accessToken);
+    console.log(userData);
+
+    let user = await UserModel.findById(userData.id);
+
+    if (!userData || !user) {
         return res.status(401).json({
             message: "Invalid access token",
         });
     }
-    req.user = userData;
+
+    req.user = user;
     next();
 };
 

@@ -7,11 +7,14 @@ let app = express();
 
 app.use(express.json());
 app.use(cookieParser());
+
 //Routes
 app.use("/api/auth", require("./routes/auth.route"));
 app.use("/api/post", require("./routes/post.route"));
+app.use("/api/user", require("./routes/user.route"));
 
 app.use(errorHandler);
+
 app.listen(PORT, () => {
     console.log(`Server is running on port ${PORT}`);
 });
