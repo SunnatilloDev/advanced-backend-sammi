@@ -3,7 +3,6 @@ const tokenModel = require("../models/token.model");
 const AuthService = require("../services/auth.service");
 const { validationResult } = require("express-validator");
 const tokenService = require("../services/token.service");
-const UserModel = require("../models/user.model");
 const authService = require("../services/auth.service");
 class AuthController {
     async register(req, res, next) {
@@ -36,7 +35,10 @@ class AuthController {
             let { id } = req.params;
             let user = await AuthService.activate(id);
             let userDto = new UserDto(user);
-            res.send(`User ${userDto.email} activated successfully`);
+            res.send({
+                message: "User activated successfully",
+                user: userDto,
+            });
         } catch (error) {
             next(error);
         }
@@ -89,7 +91,6 @@ class AuthController {
         }
     }
 
-    // ! something is not right here
     async refresh(req, res, next) {
         try {
             const { refreshToken } = req.cookies;
@@ -104,7 +105,6 @@ class AuthController {
             data;
         }
     }
-   
 }
 
 module.exports = new AuthController();

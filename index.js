@@ -10,9 +10,9 @@ app.use(cookieParser());
 
 //Routes
 app.use("/api/auth", require("./routes/auth.route"));
-app.use("/api/post", require("./routes/post.route"));
+app.use("/api/post", require("./routes/product.route"));
 app.use("/api/user", require("./routes/user.route"));
-
+app.use("/api/product", require("./routes/product.route"));
 app.use(errorHandler);
 
 app.listen(PORT, () => {

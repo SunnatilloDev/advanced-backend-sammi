@@ -9,4 +9,3 @@ let isActivated = (req, res, next) => {
 };
 
 module.exports = isActivated;
-//6653dc7f4283a236d06159c9
